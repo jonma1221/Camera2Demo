@@ -13,6 +13,18 @@
         android:layout_alignParentTop="true"/>
 
     <android.support.design.widget.FloatingActionButton
+        android:id="@+id/flash"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_flash_off_black_24dp"
+        app:backgroundTint="@android:color/darker_gray"
+        app:rippleColor="@android:color/white"
+        android:layout_toLeftOf="@+id/backCamera"
+        app:fabSize="mini"
+        android:layout_marginBottom="15dp"
+        android:layout_alignParentBottom="true"/>
+
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/backCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private String cameraId;
     private String frontCameraId;
     private boolean toggleCamera = false;
+    private boolean toggleFlash = false;
     private int imageCount = 0;
     private CameraDevice cameraDevice;
     private CameraCaptureSession cameraCaptureSession;
@@ -107,6 +108,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        final FloatingActionButton flashSwitch = (FloatingActionButton) findViewById(R.id.flash);
+        assert flashSwitch != null;
+        flashSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                closeCamera();
+                toggleFlash = !toggleFlash;
+                if(!toggleFlash)
+                    flashSwitch.setImageResource(R.drawable.ic_flash_off_black_24dp);
+                else flashSwitch.setImageResource(R.drawable.ic_flash_on_black_24dp);
+                openCamera(manager);
+            }
+        });
+
         FloatingActionButton backCameraShoot = (FloatingActionButton) findViewById(R.id.backCamera);
         assert backCameraShoot != null;
         backCameraShoot.setOnClickListener(new View.OnClickListener() {
@@ -121,13 +136,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        FloatingActionButton frontCameraShoot = (FloatingActionButton) findViewById(R.id.frontCamera);
-        assert frontCameraShoot != null;
-        frontCameraShoot.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton switchCamera = (FloatingActionButton) findViewById(R.id.frontCamera);
+        assert switchCamera != null;
+        switchCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 closeCamera();
                 toggleCamera = !toggleCamera;
+                if(!toggleCamera)
+                    switchCamera.setImageResource(R.drawable.ic_camera_front_black_24dp);
+                else switchCamera.setImageResource(R.drawable.ic_camera_rear_black_24dp);
                 openCamera(manager);
             }
         });
@@ -136,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
     // open camera and fetch camera data
     private void openCamera(CameraManager manager) {
         try {
-            cameraId = manager.getCameraIdList()[0];
+            cameraId = manager.getCameraIdList()[0]; // front camera
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap configs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
@@ -200,14 +218,23 @@ public class MainActivity extends AppCompatActivity {
                 width = jpegSizes[0].getWidth();
                 height = jpegSizes[0].getHeight();
             }
-            ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
-            List<Surface> outputSurfaces = new ArrayList<Surface>(2);
-            outputSurfaces.add(reader.getSurface());
-            outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
 
+            ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
+            List<Surface> outputSurfaces = new ArrayList<>(2);
+            outputSurfaces.add(reader.getSurface());
+            //outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
+
+            // Create the requests
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
-            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            //captureBuilder.set(/* CaptureRequest.CONTROL_MODE */CaptureRequest.FLASH_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
+            if(toggleFlash){
+                captureBuilder.set(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF);
+            }
+            else{
+                captureBuilder.set(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_TORCH);
+            }
 
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
@@ -290,16 +317,6 @@ public class MainActivity extends AppCompatActivity {
         texture.setDefaultBufferSize(size.getWidth(), size.getHeight());
         surface = new Surface(texture);
 
-        /*// Building requests
-        try{
-            captureRequestBuilder = cameraDevice.createCaptureRequest(cameraDevice.TEMPLATE_PREVIEW);
-        }
-        catch(CameraAccessException e) {
-            e.printStackTrace();
-        }
-        captureRequestBuilder.addTarget(surface);*/
-        //captureRequestBuilder.addTarget(reader.getSurface());
-
         try {
             cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
                 @Override
@@ -331,6 +348,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         captureRequestBuilder.addTarget(surface);
+
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
         thread = new HandlerThread("CameraPreview");
         thread.start();
