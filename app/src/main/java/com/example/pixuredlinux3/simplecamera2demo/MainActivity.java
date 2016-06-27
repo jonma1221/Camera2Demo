@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private Surface surface;
 
     private String cameraId;
+    private String frontCameraId;
     private CameraDevice cameraDevice;
     private CameraCaptureSession cameraCaptureSession;
     private CaptureRequest captureRequest;
@@ -114,11 +115,19 @@ public class MainActivity extends AppCompatActivity {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap configs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
+            for(String id: manager.getCameraIdList()){
+                characteristics = manager.getCameraCharacteristics(cameraId);
+                int orientation = characteristics.get(CameraCharacteristics.LENS_FACING);
+                if(orientation == CameraCharacteristics.LENS_FACING_FRONT) frontCameraId = id;
+            }
             size = configs.getOutputSizes(SurfaceTexture.class)[0];
+
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            manager.openCamera(cameraId , new CameraDevice.StateCallback() {
+
+
+            manager.openCamera(frontCameraId , new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(CameraDevice camera) {
                     cameraDevice = camera;
