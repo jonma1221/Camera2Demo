@@ -13,7 +13,7 @@
         android:layout_alignParentTop="true"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/shootButton"
+        android:id="@+id/backCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_photo_camera_black_24dp"
@@ -23,5 +23,15 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>
 
-
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/frontCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_camera_front_black_24dp"
+        app:backgroundTint="@android:color/darker_gray"
+        app:rippleColor="@android:color/white"
+        android:layout_toRightOf="@+id/backCamera"
+        app:fabSize="mini"
+        android:layout_marginBottom="15dp"
+        android:layout_alignParentBottom="true"/>
 </RelativeLayout>

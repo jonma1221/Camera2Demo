@@ -51,10 +51,13 @@ public class MainActivity extends AppCompatActivity {
 
     private String cameraId;
     private String frontCameraId;
+    private boolean toggleCamera = false;
+    private int imageCount = 0;
     private CameraDevice cameraDevice;
     private CameraCaptureSession cameraCaptureSession;
     private CaptureRequest captureRequest;
     private CaptureRequest.Builder captureRequestBuilder;
+    private CameraManager manager;
 
     private Size size;
     int width, height;
@@ -84,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+                manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
                 openCamera(manager);
             }
 
@@ -104,18 +107,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.shootButton);
-        assert fab != null;
-        fab.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton backCameraShoot = (FloatingActionButton) findViewById(R.id.backCamera);
+        assert backCameraShoot != null;
+        backCameraShoot.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 try {
                     takePicture();
 
                 } catch (CameraAccessException e) {
                     e.printStackTrace();
                 }
+            }
+        });
+
+        FloatingActionButton frontCameraShoot = (FloatingActionButton) findViewById(R.id.frontCamera);
+        assert frontCameraShoot != null;
+        frontCameraShoot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                closeCamera();
+                toggleCamera = !toggleCamera;
+                openCamera(manager);
             }
         });
     }
@@ -128,18 +141,19 @@ public class MainActivity extends AppCompatActivity {
             StreamConfigurationMap configs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
             for(String id: manager.getCameraIdList()){
-                characteristics = manager.getCameraCharacteristics(cameraId);
-                int orientation = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if(orientation == CameraCharacteristics.LENS_FACING_FRONT) frontCameraId = id;
+                characteristics = manager.getCameraCharacteristics(id);
+                if(characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
+                    frontCameraId = id;
+                }
             }
+
             size = configs.getOutputSizes(SurfaceTexture.class)[0];
 
             if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
 
-
-            String camera = frontCameraId == null ? cameraId : frontCameraId;
+            String camera = toggleCamera ? frontCameraId : cameraId;
             manager.openCamera(camera , new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(CameraDevice camera) {
@@ -161,6 +175,13 @@ public class MainActivity extends AppCompatActivity {
         catch(CameraAccessException e){
             e.printStackTrace();
         }
+    }
+
+    private void closeCamera() {
+        cameraCaptureSession.close();
+        cameraCaptureSession = null;
+        cameraDevice.close();
+        cameraDevice = null;
     }
 
     // submitting requests
@@ -191,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
             // Orientation
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
-            final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+            final File file = new File(Environment.getExternalStorageDirectory()+"/img" + imageCount++ + ".jpg");
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
                 public void onImageAvailable(ImageReader reader) {
