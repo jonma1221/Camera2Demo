@@ -3,16 +3,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/fragment_holder"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.example.pixuredlinux3.simplecamera2demo.MainActivity">
+    tools:context="com.example.pixuredlinux3.simplecamera2demo.Camera1Activity">
 
-
-    <!--<TextureView
-        android:id="@+id/texture"
+    <FrameLayout
+        android:id="@+id/camera_view"
         android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </FrameLayout>
+
+    <ImageButton
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"/>
+        android:id="@+id/imgClose"
+        android:layout_gravity="right|top"
+        android:background="@android:drawable/ic_menu_close_clear_cancel"
+        android:padding="20dp"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/flash"
@@ -47,5 +53,5 @@
         android:layout_toRightOf="@+id/shoot"
         app:fabSize="mini"
         android:layout_marginBottom="15dp"
-        android:layout_alignParentBottom="true"/>-->
+        android:layout_alignParentBottom="true"/>
 </RelativeLayout>

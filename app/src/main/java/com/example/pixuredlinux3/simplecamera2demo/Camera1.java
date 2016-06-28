@@ -37,7 +37,6 @@ public class Camera1 extends SurfaceView implements SurfaceHolder.Callback{
         } catch (IOException e) {
             Log.d("Error", "Error setting camera preview: " + e.getMessage());
         }
-
     }
 
     @Override
@@ -75,5 +74,9 @@ public class Camera1 extends SurfaceView implements SurfaceHolder.Callback{
     public void surfaceDestroyed(SurfaceHolder holder) {
         mCamera.stopPreview();
         mCamera.release();
+    }
+
+    public SurfaceHolder getmHolder() {
+        return mHolder;
     }
 }
