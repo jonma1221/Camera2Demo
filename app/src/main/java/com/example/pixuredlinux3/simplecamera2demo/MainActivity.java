@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
-import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -34,7 +33,6 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.File;
@@ -126,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Button to shoot photo
-        FloatingActionButton backCameraShoot = (FloatingActionButton) findViewById(R.id.backCamera);
+        FloatingActionButton backCameraShoot = (FloatingActionButton) findViewById(R.id.shoot);
         assert backCameraShoot != null;
         backCameraShoot.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Button to toggle front/rear camera
-        final FloatingActionButton switchCamera = (FloatingActionButton) findViewById(R.id.frontCamera);
+        final FloatingActionButton switchCamera = (FloatingActionButton) findViewById(R.id.switchCamera);
         assert switchCamera != null;
         switchCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -318,9 +316,9 @@ public class MainActivity extends AppCompatActivity {
             }
             int adjustedOrientation = getJpegOrientation(characteristics, screenOrientation);
             /*ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);*/
+            ORIENTATIONS.append(Surface.ROTATION_90, 0);
+            ORIENTATIONS.append(Surface.ROTATION_180, 270);
+            ORIENTATIONS.append(Surface.ROTATION_270, 180);*/
 
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, adjustedOrientation);
             //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
