@@ -6,6 +6,7 @@ import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -39,6 +41,18 @@ public class Camera1Fragment extends Fragment {
 
     }
 
+    /*@Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putSerializable("camera", (Serializable) mCamera);
+        super.onSaveInstanceState(outState);
+    }
+
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+       if(savedInstanceState != null) mCamera = (Camera) savedInstanceState.getSerializable("camera");
+    }*/
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -208,5 +222,6 @@ public class Camera1Fragment extends Fragment {
         mCamera.setPreviewCallback(null);
         mCamera.release();
     }
+
 
 }
