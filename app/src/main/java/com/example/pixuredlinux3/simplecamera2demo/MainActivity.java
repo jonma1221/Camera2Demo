@@ -17,11 +17,14 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -48,9 +51,10 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String TAG = "Camera2test";
     private TextureView textureView;
-    private Button takePictureButton;
     private Surface surface;
 
+    private static final int REQUEST_CAMERA_RESULT = 1;
+    private static final int REQUEST_WRITE_STORAGE_RESULT = 2;
     private String cameraId;
     private String frontCameraId;
     private boolean toggleCamera = false;
@@ -61,13 +65,8 @@ public class MainActivity extends AppCompatActivity {
     private CaptureRequest captureRequest;
     private CaptureRequest.Builder captureRequestBuilder;
     private CameraManager manager;
-
     private Size size;
-    int width, height;
-    private ImageReader imageReader;
-    private File file;
-    private static final int REQUEST_CAMERA_PERMISSION = 200;
-    private boolean mFlashSupported;
+
     private Handler backgroundHandler;
     private HandlerThread thread;
 
@@ -75,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private HandlerThread mBackgroundThread;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Button to toggle flash
         final FloatingActionButton flashSwitch = (FloatingActionButton) findViewById(R.id.flash);
         assert flashSwitch != null;
         flashSwitch.setOnClickListener(new View.OnClickListener() {
@@ -117,13 +118,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 closeCamera();
                 toggleFlash = !toggleFlash;
-                if(!toggleFlash)
+                if (!toggleFlash)
                     flashSwitch.setImageResource(R.drawable.ic_flash_off_black_24dp);
                 else flashSwitch.setImageResource(R.drawable.ic_flash_on_black_24dp);
                 openCamera(manager);
             }
         });
 
+        // Button to shoot photo
         FloatingActionButton backCameraShoot = (FloatingActionButton) findViewById(R.id.backCamera);
         assert backCameraShoot != null;
         backCameraShoot.setOnClickListener(new View.OnClickListener() {
@@ -138,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Button to toggle front/rear camera
         final FloatingActionButton switchCamera = (FloatingActionButton) findViewById(R.id.frontCamera);
         assert switchCamera != null;
         switchCamera.setOnClickListener(new View.OnClickListener() {
@@ -145,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 closeCamera();
                 toggleCamera = !toggleCamera;
-                if(!toggleCamera)
+                if (!toggleCamera)
                     switchCamera.setImageResource(R.drawable.ic_camera_front_black_24dp);
                 else switchCamera.setImageResource(R.drawable.ic_camera_rear_black_24dp);
                 openCamera(manager);
@@ -160,21 +163,54 @@ public class MainActivity extends AppCompatActivity {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap configs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
-            for(String id: manager.getCameraIdList()){
+            for (String id : manager.getCameraIdList()) {
                 characteristics = manager.getCameraCharacteristics(id);
-                if(characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
+                if (characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
                     frontCameraId = id;
+                }
+                if (characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK) {
+                    cameraId = id;
                 }
             }
 
             size = configs.getOutputSizes(SurfaceTexture.class)[0];
 
-            if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            /*if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                Log.d("Entered","");
                 return;
-            }
+            }*/
 
             String camera = toggleCamera ? frontCameraId : cameraId;
-            manager.openCamera(camera , new CameraDevice.StateCallback() {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    if(shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+                        Toast.makeText(this, "No permission to use the camera services", Toast.LENGTH_SHORT).show();
+                    }
+                    requestPermissions(new String[] {Manifest.permission.CAMERA},
+                            REQUEST_CAMERA_RESULT);
+                }
+                else{
+                    /*manager.openCamera(camera, new CameraDevice.StateCallback() {
+                        @Override
+                        public void onOpened(CameraDevice camera) {
+                            cameraDevice = camera;
+                            startPreview();
+                        }
+
+                        @Override
+                        public void onDisconnected(CameraDevice camera) {
+                            cameraDevice.close();
+                        }
+
+                        @Override
+                        public void onError(CameraDevice camera, int error) {
+                            cameraDevice.close();
+                        }
+                    }, null);*/
+                }
+            }
+
+            manager.openCamera(camera, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(CameraDevice camera) {
                     cameraDevice = camera;
@@ -194,6 +230,27 @@ public class MainActivity extends AppCompatActivity {
         }
         catch(CameraAccessException e){
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch(requestCode){
+            case REQUEST_CAMERA_RESULT:
+                if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
+                    Toast.makeText(this,
+                            "Cannot run application because camera service permissions have not been granted",
+                            Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case REQUEST_WRITE_STORAGE_RESULT:
+                    if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+
+                    }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                break;
         }
     }
 
@@ -238,7 +295,6 @@ public class MainActivity extends AppCompatActivity {
                 captureBuilder.set(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_TORCH);
             }
 
-
             // Orientation
             WindowManager windowManager = (WindowManager) this
                     .getSystemService(Context.WINDOW_SERVICE);
@@ -278,6 +334,22 @@ public class MainActivity extends AppCompatActivity {
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
+
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                            if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                    == PackageManager.PERMISSION_GRANTED){
+                                save(bytes);
+                            }
+                            else{
+                                if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                                    Toast.makeText(MainActivity.this,
+                                            "We need write storage permission to start the gallery and save images",
+                                            Toast.LENGTH_SHORT).show();
+                                }
+                                requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                        REQUEST_WRITE_STORAGE_RESULT);
+                            }
+                        }
                         save(bytes);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
