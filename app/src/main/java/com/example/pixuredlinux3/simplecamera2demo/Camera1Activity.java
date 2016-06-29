@@ -21,7 +21,7 @@ import java.util.Date;
 
 public class Camera1Activity extends AppCompatActivity {
     private Camera mCamera = null;
-    private Camera1 mCameraView = null;
+    private Camera1Preview mCameraView = null;
     private int currentCameraId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +35,7 @@ public class Camera1Activity extends AppCompatActivity {
         }
 
         if(mCamera != null) {
-            mCameraView = new Camera1(this, mCamera);//create a SurfaceView to show camera data
+            mCameraView = new Camera1Preview(this, mCamera);//create a SurfaceView to show camera data
             FrameLayout camera_view = (FrameLayout)findViewById(R.id.camera_view);
             camera_view.addView(mCameraView);//add the SurfaceView to the layout
         }

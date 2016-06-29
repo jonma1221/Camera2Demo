@@ -6,7 +6,6 @@ import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -15,16 +14,14 @@ import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 
-import com.example.pixuredlinux3.simplecamera2demo.Camera1;
+import com.example.pixuredlinux3.simplecamera2demo.Camera1Preview;
 import com.example.pixuredlinux3.simplecamera2demo.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -34,21 +31,21 @@ import java.util.Date;
 public class Camera1Fragment extends Fragment {
 
     private Camera mCamera = null;
-    private Camera1 mCameraView = null;
+    private Camera1Preview mCameraView = null;
     private int currentCameraId;
+    private boolean flashToggle;
 
     public Camera1Fragment() {
 
     }
 
-    /*@Override
+    @Override
     public void onSaveInstanceState(Bundle outState) {
-        outState.putSerializable("camera", (Serializable) mCamera);
+
         super.onSaveInstanceState(outState);
     }
 
-
-    @Override
+    /*@Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
        if(savedInstanceState != null) mCamera = (Camera) savedInstanceState.getSerializable("camera");
@@ -67,18 +64,30 @@ public class Camera1Fragment extends Fragment {
         }
 
         if(mCamera != null) {
-            mCameraView = new Camera1(getActivity(), mCamera);//create a SurfaceView to show camera data
+            mCameraView = new Camera1Preview(getActivity(), mCamera);//create a SurfaceView to show camera data
             FrameLayout camera_view = (FrameLayout) view.findViewById(R.id.camera_view);
             camera_view.addView(mCameraView);//add the SurfaceView to the layout
         }
 
-        //btn to close the application
-        ImageButton imgClose = (ImageButton)view.findViewById(R.id.imgClose);
-        assert imgClose != null;
-        imgClose.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton toggleFlash = (FloatingActionButton) view.findViewById(R.id.flash);
+        toggleFlash.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                System.exit(0);
+            public void onClick(View v) {
+                Camera.Parameters p = mCamera.getParameters();
+                if(!flashToggle) {
+                    p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                    toggleFlash.setImageResource(R.drawable.ic_flash_on_black_24dp);
+                }
+                else {
+                    p.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+
+                    toggleFlash.setImageResource(R.drawable.ic_flash_off_black_24dp);
+                }
+
+                mCamera.setParameters(p);
+                mCamera.startPreview();
+                flashToggle = !flashToggle;
+
             }
         });
 
@@ -123,7 +132,6 @@ public class Camera1Fragment extends Fragment {
         });
         return view;
     }
-
 
     public static void setCameraDisplayOrientation(Activity activity,
                                                    int cameraId, android.hardware.Camera camera) {
@@ -222,6 +230,4 @@ public class Camera1Fragment extends Fragment {
         mCamera.setPreviewCallback(null);
         mCamera.release();
     }
-
-
 }
