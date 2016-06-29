@@ -7,16 +7,17 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Created by pixuredlinux3 on 6/28/16.
  */
-public class Camera1 extends SurfaceView implements SurfaceHolder.Callback{
+public class Camera1Preview extends SurfaceView implements SurfaceHolder.Callback, Serializable{
 
     private SurfaceHolder mHolder;
     private Camera mCamera;
 
-    public Camera1(Context context, Camera camera){
+    public Camera1Preview(Context context, Camera camera){
         super(context);
         mCamera = camera;
         mCamera.setDisplayOrientation(90);
@@ -37,7 +38,6 @@ public class Camera1 extends SurfaceView implements SurfaceHolder.Callback{
         } catch (IOException e) {
             Log.d("Error", "Error setting camera preview: " + e.getMessage());
         }
-
     }
 
     @Override
@@ -75,5 +75,9 @@ public class Camera1 extends SurfaceView implements SurfaceHolder.Callback{
     public void surfaceDestroyed(SurfaceHolder holder) {
         mCamera.stopPreview();
         mCamera.release();
+    }
+
+    public SurfaceHolder getmHolder() {
+        return mHolder;
     }
 }

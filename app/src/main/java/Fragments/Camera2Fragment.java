@@ -1,4 +1,5 @@
-package com.example.pixuredlinux3.simplecamera2demo;
+package Fragments;
+
 
 import android.Manifest;
 import android.content.Context;
@@ -17,25 +18,28 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
-import android.util.SparseIntArray;
+import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
 import android.widget.Toast;
+
+import com.example.pixuredlinux3.simplecamera2demo.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -47,11 +51,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import Fragments.Camera1Fragment;
-import Fragments.Camera2Fragment;
-
-public class MainActivity extends AppCompatActivity {
-
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class Camera2Fragment extends Fragment {
     private final static String TAG = "Camera2test";
     private TextureView textureView;
     private Surface surface;
@@ -63,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean toggleCamera = false;
     private boolean toggleFlash = false;
     private int imageCount = 0;
+
     private CameraDevice cameraDevice;
     private CameraCaptureSession cameraCaptureSession;
     private CaptureRequest captureRequest;
@@ -73,40 +77,19 @@ public class MainActivity extends AppCompatActivity {
     private Handler backgroundHandler;
     private HandlerThread thread;
 
-    private Handler mBackgroundHandler;
-    private HandlerThread mBackgroundThread;
+    public Camera2Fragment() {
 
-    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
-
-    static {
-        ORIENTATIONS.append(Surface.ROTATION_0, 90);
-        ORIENTATIONS.append(Surface.ROTATION_90, 0);
-        ORIENTATIONS.append(Surface.ROTATION_180, 270);
-        ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        FragmentManager fm = getSupportFragmentManager();
-        Fragment fragment = fm.findFragmentById(R.id.fragment_holder);
-        if(fragment == null){
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-                fragment = new Camera2Fragment();
-                fm.beginTransaction().add(R.id.fragment_holder, fragment).commit();
-            }
-            else {
-                fragment = new Camera1Fragment();
-                fm.beginTransaction().add(R.id.fragment_holder, fragment).commit();
-            }
-        }
-
-        /*textureView = (TextureView) findViewById(R.id.texture);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_camera2, container, false);
+        textureView = (TextureView) view.findViewById(R.id.texture);
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+                manager = (CameraManager) getActivity().getSystemService(Context.CAMERA_SERVICE);
                 openCamera(manager);
             }
 
@@ -127,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Button to toggle flash
-        final FloatingActionButton flashSwitch = (FloatingActionButton) findViewById(R.id.flash);
+        final FloatingActionButton flashSwitch = (FloatingActionButton) view.findViewById(R.id.flash);
         assert flashSwitch != null;
         flashSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -142,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Button to shoot photo
-        FloatingActionButton backCameraShoot = (FloatingActionButton) findViewById(R.id.shoot);
+        FloatingActionButton backCameraShoot = (FloatingActionButton) view.findViewById(R.id.shoot);
         assert backCameraShoot != null;
         backCameraShoot.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -157,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Button to toggle front/rear camera
-        final FloatingActionButton switchCamera = (FloatingActionButton) findViewById(R.id.switchCamera);
+        final FloatingActionButton switchCamera = (FloatingActionButton) view.findViewById(R.id.switchCamera);
         assert switchCamera != null;
         switchCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,9 +152,10 @@ public class MainActivity extends AppCompatActivity {
                 else switchCamera.setImageResource(R.drawable.ic_camera_rear_black_24dp);
                 openCamera(manager);
             }
-        });*/
+        });
+        return view;
     }
-/*
+
     // open camera and fetch camera data
     private void openCamera(CameraManager manager) {
         try {
@@ -191,38 +175,14 @@ public class MainActivity extends AppCompatActivity {
 
             size = configs.getOutputSizes(SurfaceTexture.class)[0];
 
-            *//*if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                Log.d("Entered","");
-                return;
-            }*//*
-
             String camera = toggleCamera ? frontCameraId : cameraId;
             if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     if(shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-                        Toast.makeText(this, "No permission to use the camera services", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "No permission to use the camera services", Toast.LENGTH_SHORT).show();
                     }
                     requestPermissions(new String[] {Manifest.permission.CAMERA},
                             REQUEST_CAMERA_RESULT);
-                }
-                else{
-                    *//*manager.openCamera(camera, new CameraDevice.StateCallback() {
-                        @Override
-                        public void onOpened(CameraDevice camera) {
-                            cameraDevice = camera;
-                            startPreview();
-                        }
-
-                        @Override
-                        public void onDisconnected(CameraDevice camera) {
-                            cameraDevice.close();
-                        }
-
-                        @Override
-                        public void onError(CameraDevice camera, int error) {
-                            cameraDevice.close();
-                        }
-                    }, null);*//*
                 }
             }
 
@@ -254,15 +214,15 @@ public class MainActivity extends AppCompatActivity {
         switch(requestCode){
             case REQUEST_CAMERA_RESULT:
                 if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
-                    Toast.makeText(this,
+                    Toast.makeText(getActivity(),
                             "Cannot run application because camera service permissions have not been granted",
                             Toast.LENGTH_SHORT).show();
                 }
                 break;
             case REQUEST_WRITE_STORAGE_RESULT:
-                    if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
 
-                    }
+                }
                 break;
             default:
                 super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -280,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
     // submitting requests
     private void takePicture() throws CameraAccessException {
 
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        CameraManager manager = (CameraManager) getActivity().getSystemService(Context.CAMERA_SERVICE);
         try {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
             Size[] jpegSizes = null;
@@ -302,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
             // Create the requests
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
-            //captureBuilder.set(*//* CaptureRequest.CONTROL_MODE *//*CaptureRequest.FLASH_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            //captureBuilder.set(/* CaptureRequest.CONTROL_MODE */CaptureRequest.FLASH_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
             if(toggleFlash){
                 captureBuilder.set(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF);
@@ -313,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Orientation
             WindowManager windowManager = (WindowManager) this
-                    .getSystemService(Context.WINDOW_SERVICE);
+                    .getActivity().getSystemService(Context.WINDOW_SERVICE);
             int rotation = windowManager.getDefaultDisplay().getRotation();
             //int rotation = getWindowManager().getDefaultDisplay().getRotation();
             Log.d("Rotation:", rotation + "");
@@ -333,10 +293,10 @@ public class MainActivity extends AppCompatActivity {
                     break;
             }
             int adjustedOrientation = getJpegOrientation(characteristics, screenOrientation);
-            *//*ORIENTATIONS.append(Surface.ROTATION_0, 90);
+            /*ORIENTATIONS.append(Surface.ROTATION_0, 90);
             ORIENTATIONS.append(Surface.ROTATION_90, 0);
             ORIENTATIONS.append(Surface.ROTATION_180, 270);
-            ORIENTATIONS.append(Surface.ROTATION_270, 180);*//*
+            ORIENTATIONS.append(Surface.ROTATION_270, 180);*/
 
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, adjustedOrientation);
             //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
@@ -352,13 +312,13 @@ public class MainActivity extends AppCompatActivity {
                         buffer.get(bytes);
 
                         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                            if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            if(ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
                                     == PackageManager.PERMISSION_GRANTED){
                                 save(bytes);
                             }
                             else{
                                 if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                                    Toast.makeText(MainActivity.this,
+                                    Toast.makeText(getActivity(),
                                             "We need write storage permission to start the gallery and save images",
                                             Toast.LENGTH_SHORT).show();
                                 }
@@ -396,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Toast.makeText(MainActivity.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Saved:" + file, Toast.LENGTH_SHORT).show();
                     startPreview();
                 }
             };
@@ -414,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onConfigureFailed(CameraCaptureSession session) {
                 }
-            }, *//*mBackgroundHandler*//* backgroundHandler);
+            }, /*mBackgroundHandler*/ backgroundHandler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -462,8 +422,9 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onConfigureFailed(CameraCaptureSession session) {
-                    Toast.makeText(MainActivity.this, "onConfigureFailed", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getActivity(), "onConfigureFailed", Toast.LENGTH_LONG).show();
                 }
+
             }, null);
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -495,6 +456,6 @@ public class MainActivity extends AppCompatActivity {
         catch(CameraAccessException e){
             e.printStackTrace();
         }
-    }*/
+    }
 
 }
