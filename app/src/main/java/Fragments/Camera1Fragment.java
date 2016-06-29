@@ -34,6 +34,7 @@ public class Camera1Fragment extends Fragment {
     private Camera1Preview mCameraView = null;
     private int currentCameraId;
     private boolean flashToggle;
+    FrameLayout camera_view;
 
     public Camera1Fragment() {
 
@@ -229,5 +230,15 @@ public class Camera1Fragment extends Fragment {
         mCameraView.getHolder().removeCallback(mCameraView);
         mCamera.setPreviewCallback(null);
         mCamera.release();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mCamera.setPreviewCallback(null);
+        mCamera = Camera.open();
+        //mCamera.setPreviewCallback(null);
+        mCameraView = new Camera1Preview(getActivity(), mCamera);//set preview
+        camera_view.addView(mCameraView);
     }
 }
