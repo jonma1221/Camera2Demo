@@ -3,14 +3,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.example.pixuredlinux3.simplecamera2demo.Camera1Activity">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <FrameLayout
         android:id="@+id/camera_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <ImageView
+            android:id="@+id/galleryPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
     </FrameLayout>
+
+
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/gallery"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_picture_in_picture_black_24dp"
+        app:backgroundTint="@android:color/darker_gray"
+        app:rippleColor="@android:color/white"
+        android:layout_toLeftOf="@+id/flash"
+        app:fabSize="mini"
+        android:layout_marginBottom="15dp"
+        android:layout_alignParentBottom="true"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/flash"
@@ -43,6 +64,18 @@
         app:backgroundTint="@android:color/darker_gray"
         app:rippleColor="@android:color/white"
         android:layout_toRightOf="@+id/shoot"
+        app:fabSize="mini"
+        android:layout_marginBottom="15dp"
+        android:layout_alignParentBottom="true"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/chooseFilter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_action_search"
+        app:backgroundTint="@android:color/darker_gray"
+        app:rippleColor="@android:color/white"
+        android:layout_toRightOf="@+id/switchCamera"
         app:fabSize="mini"
         android:layout_marginBottom="15dp"
         android:layout_alignParentBottom="true"/>

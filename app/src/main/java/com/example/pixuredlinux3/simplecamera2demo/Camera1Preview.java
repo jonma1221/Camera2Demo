@@ -64,11 +64,9 @@ public class Camera1Preview extends SurfaceView implements SurfaceHolder.Callbac
         try {
             mCamera.setPreviewDisplay(mHolder);
             mCamera.startPreview();
-
         } catch (Exception e){
             Log.d("Error", "Error starting camera preview: " + e.getMessage());
         }
-
     }
 
     @Override

@@ -56,11 +56,12 @@ import java.util.List;
  */
 public class Camera2Fragment extends Fragment {
     private final static String TAG = "Camera2test";
+    private static final int REQUEST_CAMERA_RESULT = 1;
+    private static final int REQUEST_WRITE_STORAGE_RESULT = 2;
+
     private TextureView textureView;
     private Surface surface;
 
-    private static final int REQUEST_CAMERA_RESULT = 1;
-    private static final int REQUEST_WRITE_STORAGE_RESULT = 2;
     private String cameraId;
     private String frontCameraId;
     private boolean toggleCamera = false;
@@ -159,7 +160,7 @@ public class Camera2Fragment extends Fragment {
     // open camera and fetch camera data
     private void openCamera(CameraManager manager) {
         try {
-            cameraId = manager.getCameraIdList()[0]; // front camera
+            cameraId = manager.getCameraIdList()[0]; // rear camera
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap configs = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
@@ -168,15 +169,12 @@ public class Camera2Fragment extends Fragment {
                 if (characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT) {
                     frontCameraId = id;
                 }
-                if (characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK) {
-                    cameraId = id;
-                }
             }
 
             size = configs.getOutputSizes(SurfaceTexture.class)[0];
 
             String camera = toggleCamera ? frontCameraId : cameraId;
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){ // Marshmallow runtime permissions
                 if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                     if(shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
                         Toast.makeText(getActivity(), "No permission to use the camera services", Toast.LENGTH_SHORT).show();
@@ -257,12 +255,10 @@ public class Camera2Fragment extends Fragment {
             ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
             List<Surface> outputSurfaces = new ArrayList<>(2);
             outputSurfaces.add(reader.getSurface());
-            //outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
 
             // Create the requests
             final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
-            //captureBuilder.set(/* CaptureRequest.CONTROL_MODE */CaptureRequest.FLASH_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
             if(toggleFlash){
                 captureBuilder.set(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF);
@@ -275,8 +271,6 @@ public class Camera2Fragment extends Fragment {
             WindowManager windowManager = (WindowManager) this
                     .getActivity().getSystemService(Context.WINDOW_SERVICE);
             int rotation = windowManager.getDefaultDisplay().getRotation();
-            //int rotation = getWindowManager().getDefaultDisplay().getRotation();
-            Log.d("Rotation:", rotation + "");
             int screenOrientation = 0;
             switch (rotation) {
                 case Surface.ROTATION_0:
@@ -292,14 +286,10 @@ public class Camera2Fragment extends Fragment {
                     screenOrientation =  270;
                     break;
             }
-            int adjustedOrientation = getJpegOrientation(characteristics, screenOrientation);
-            /*ORIENTATIONS.append(Surface.ROTATION_0, 90);
-            ORIENTATIONS.append(Surface.ROTATION_90, 0);
-            ORIENTATIONS.append(Surface.ROTATION_180, 270);
-            ORIENTATIONS.append(Surface.ROTATION_270, 180);*/
 
+            int adjustedOrientation = getJpegOrientation(characteristics, screenOrientation);
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, adjustedOrientation);
-            //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
+
             final File file = new File(Environment.getExternalStorageDirectory()+"/img" + imageCount++ + ".jpg");
             ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                 @Override
@@ -319,7 +309,7 @@ public class Camera2Fragment extends Fragment {
                             else{
                                 if(shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                                     Toast.makeText(getActivity(),
-                                            "We need write storage permission to start the gallery and save images",
+                                            "Need write storage permission to start the gallery and save images",
                                             Toast.LENGTH_SHORT).show();
                                 }
                                 requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
@@ -337,6 +327,7 @@ public class Camera2Fragment extends Fragment {
                         }
                     }
                 }
+
                 private void save(byte[] bytes) throws IOException {
                     OutputStream output = null;
                     try {
