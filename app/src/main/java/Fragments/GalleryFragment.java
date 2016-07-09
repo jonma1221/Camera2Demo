@@ -31,7 +31,7 @@ import jp.co.cyberagent.android.gpuimage.OpenGlUtils;
  * A simple {@link Fragment} subclass.
  */
 public class GalleryFragment extends Fragment {
-
+    private final String TAG = "GalleryFragment";
     private ImageView savedPhoto;
     private String imageUri;
     private Uri galleryImage;
@@ -58,6 +58,7 @@ public class GalleryFragment extends Fragment {
         Bundle bundle = this.getArguments();
         if(bundle != null){
             imageUri = bundle.getString("uri");
+            //Log.d(TAG, imageUri);
         }
 
     }

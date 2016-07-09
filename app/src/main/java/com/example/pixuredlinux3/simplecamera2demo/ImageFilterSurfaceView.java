@@ -43,8 +43,8 @@ import javax.microedition.khronos.opengles.GL10;
  * com.example.pixuredlinux3.simplecamera2demo.ImageFilterSurfaceView is used to hold GLSurfaceView
  * that renders videos with filters on a surface
  */
-public class ImageFilterSurfaceView /*extends GLSurfaceView*/ {
-    /*private static final String TAG = "com.example.pixuredlinux3.simplecamera2demo.ImageFilterSurfaceView";
+public class ImageFilterSurfaceView extends GLSurfaceView {
+    private static final String TAG = "com.example.pixuredlinux3.simplecamera2demo.ImageFilterSurfaceView";
 
     ImageRender mRenderer;
     private String mMediaUri;
@@ -324,10 +324,10 @@ public class ImageFilterSurfaceView /*extends GLSurfaceView*/ {
             return (mShaderDetail.getBrightness() + 1f) / 2f;
         }
 
-        *//**
+        /**
          * All com.example.pixuredlinux3.simplecamera2demo.mod settings will expect float between
          * 0 and 1 and will return such
-         *//*
+         */
         public void setBrightness(float brightness) {
 
             mShaderDetail.setBrightness(brightness * 2f - 1f);
@@ -452,6 +452,6 @@ public class ImageFilterSurfaceView /*extends GLSurfaceView*/ {
             return mBitmap;
         }
 
-    }*/
+    }
 
 }

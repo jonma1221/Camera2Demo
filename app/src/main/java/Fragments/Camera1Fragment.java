@@ -183,8 +183,14 @@ public class Camera1Fragment extends Fragment {
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), GalleryActivity.class);
                 startActivity(intent);
+
+               /* Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image*//*");
+                startActivityForResult(intent,PICK_IMAGE);*/
             }
         });
+
+
         //return glSurfaceView;
         return view;
     }
@@ -358,6 +364,21 @@ public class Camera1Fragment extends Fragment {
     public void onResume() {
         super.onResume();
         openCamera();
+    }
+
+    @Override
+    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+        switch (requestCode) {
+            case PICK_IMAGE:
+                if (resultCode == Activity.RESULT_OK) {
+                    Intent intent = GalleryActivity.newIntent(getActivity(),data.getData().toString());
+                    startActivity(intent);
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
+        }
     }
 }
 
