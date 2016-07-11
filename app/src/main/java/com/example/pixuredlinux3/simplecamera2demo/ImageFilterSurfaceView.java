@@ -15,7 +15,9 @@ package com.example.pixuredlinux3.simplecamera2demo;/*
  */
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.media.ExifInterface;
 import android.media.MediaPlayer;
@@ -23,11 +25,16 @@ import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.support.v4.content.CursorLoader;
 import android.util.Log;
 
 import com.example.pixuredlinux3.simplecamera2demo.mod.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -54,11 +61,13 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
     public ImageFilterSurfaceView(Context context, String uri) {
         super(context);
         setEGLContextClientVersion(2);
+        String URI = getRealPathFromURI(Uri.parse(uri), context);
         mMediaUri = uri;
         ExifInterface exif;
         int exifOrientation = 0;
         try {
-            exif = new ExifInterface(Uri.parse(mMediaUri).getPath());
+            exif = new ExifInterface(URI);
+            //exif = new ExifInterface(Uri.parse(mMediaUri).getPath());
             exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
         } catch (IOException e) {
             e.printStackTrace();
@@ -78,7 +87,12 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
                 rotation = 0;
                 break;
         }
-        origBitmap = BitmapDecoder.getDecoder().decode(new File(Uri.parse(uri).getPath()));
+        //origBitmap = BitmapDecoder.getDecoder().decode(new File(Uri.parse(uri).getPath()));
+
+        origBitmap = BitmapFactory.decodeFile(URI);
+        origBitmap = scaleDown(origBitmap, 2048, false);
+        Log.d("Width", "Width: " + origBitmap.getWidth());
+        Log.d("Height", "Height: " + origBitmap.getHeight());
         if (rotation != 0) {
             android.graphics.Matrix matrix = new android.graphics.Matrix();
             matrix.postRotate(rotation);
@@ -88,6 +102,33 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
         mRenderer = new ImageRender(origBitmap, (float) origBitmap.getWidth() / (float) origBitmap.getHeight());
         setRenderer(mRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
+    }
+
+    public static Bitmap scaleDown(Bitmap realImage, float maxImageSize,
+                                   boolean filter) {
+        float ratio = Math.min(
+                (float) maxImageSize / realImage.getWidth(),
+                (float) maxImageSize / realImage.getHeight());
+        int width = Math.round((float) ratio * realImage.getWidth());
+        int height = Math.round((float) ratio * realImage.getHeight());
+
+        Bitmap newBitmap = Bitmap.createScaledBitmap(realImage, width,
+                height, filter);
+        return newBitmap;
+    }
+
+    public String getRealPathFromURI(Uri contentUri, Context context) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+
+        CursorLoader cursorLoader = new CursorLoader(
+                context,
+                contentUri, proj, null, null, null);
+        Cursor cursor = cursorLoader.loadInBackground();
+
+        int column_index =
+                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
     }
 
     public Bitmap getBitmap() {
@@ -178,7 +219,7 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
                 return;
             }
             GLES20.glUseProgram(p.mProgram);
-            GLToolbox.checkGlError("glUseProgram");
+            //GLToolbox.checkGlError("glUseProgram");
 
             // Set the input texture
             mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
@@ -452,6 +493,9 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
             return mBitmap;
         }
 
+        public void updateTexture(){
+
+        }
     }
 
 }

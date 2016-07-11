@@ -36,8 +36,6 @@ public class PixFilterGenerator {
         filters.add(getBlinding());
         filters.add(getPosterizeFilter());
 
-        /*Test*/
-        filters.add(getLuminance());
         return filters;
     }
 
@@ -68,7 +66,7 @@ public class PixFilterGenerator {
     }
 
     /*Test*/
-    public static PixuredFilter getLuminance(){
+    /*public static PixuredFilter getLuminance(){
         ArrayList<PixFilterMod> mods = new ArrayList<>();
         float matrix [] = new float[] {
                 0.3086f,   0.3086f,   0.3086f,   0.0f,
@@ -80,7 +78,7 @@ public class PixFilterGenerator {
         mods.add(colorFilter);
 
         return new PixuredFilter((ArrayList) mods, MOD_LUMINANCE);
-    }
+    }*/
 
     public static PixuredFilter getDefault() {
         ArrayList<PixFilterMod> mods = new ArrayList<>();

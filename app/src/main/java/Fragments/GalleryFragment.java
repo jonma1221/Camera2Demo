@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
@@ -14,6 +15,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 
 import com.example.pixuredlinux3.simplecamera2demo.GPUImageFilterTools;
@@ -60,7 +63,6 @@ public class GalleryFragment extends Fragment {
             imageUri = bundle.getString("uri");
             //Log.d(TAG, imageUri);
         }
-
     }
 
     @Override
@@ -83,7 +85,9 @@ public class GalleryFragment extends Fragment {
         }*/
 
 
-        //ImageFilterSurfaceView imageFilterSurfaceView = new ImageFilterSurfaceView(getActivity(),imageUri);
+        ImageFilterSurfaceView imageFilterSurfaceView = new ImageFilterSurfaceView(getActivity(),imageUri);
+        imageFilterSurfaceView = (ImageFilterSurfaceView) view.findViewById(R.id.filterSurface);
+
         FloatingActionButton gallery = (FloatingActionButton) view.findViewById(R.id.gallery);
         gallery.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -101,13 +105,13 @@ public class GalleryFragment extends Fragment {
                 GPUImageFilterTools.showDialog(getActivity(), new GPUImageFilterTools.OnGpuImageFilterChosenListener() {
                     @Override
                     public void onGpuImageFilterChosenListener(GPUImageFilter filter) {
-                        switchFilterTo(filter);
-                        mGPUImageView.requestRender();
+                        /*switchFilterTo(filter);
+                        mGPUImageView.requestRender();*/
                     }
                 });
             }
         });
-        mGPUImageView = (GPUImageView) view.findViewById(R.id.gpuimage);
+        //mGPUImageView = (GPUImageView) view.findViewById(R.id.gpuimage);
         return view;
 
         //return imageFilterSurfaceView;

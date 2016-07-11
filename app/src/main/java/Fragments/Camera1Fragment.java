@@ -181,17 +181,15 @@ public class Camera1Fragment extends Fragment {
         launchGalleryActivity.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getActivity(), GalleryActivity.class);
-                startActivity(intent);
+                /*Intent intent = new Intent(getActivity(), GalleryActivity.class);
+                startActivity(intent);*/
 
-               /* Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image*//*");
-                startActivityForResult(intent,PICK_IMAGE);*/
+                Intent intent = new Intent(Intent.ACTION_PICK);
+                intent.setType("image/*");
+                startActivityForResult(intent, PICK_IMAGE);
             }
         });
 
-
-        //return glSurfaceView;
         return view;
     }
 

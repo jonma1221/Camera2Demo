@@ -19,7 +19,7 @@ public class GLToolbox {
         GLES20.glGenTextures(1, tex, 0);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, tex[0]);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, src, 0);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, src, 0); // here ?
 
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D,
                 GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
