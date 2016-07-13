@@ -2,54 +2,55 @@ package Fragments;
 
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.opengl.GLSurfaceView;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.pixuredlinux3.simplecamera2demo.GPUImageFilterTools;
 import com.example.pixuredlinux3.simplecamera2demo.ImageFilterSurfaceView;
 import com.example.pixuredlinux3.simplecamera2demo.R;
-import com.squareup.picasso.Picasso;
-
-import java.io.IOException;
 
 import jp.co.cyberagent.android.gpuimage.GPUImageFilter;
 import jp.co.cyberagent.android.gpuimage.GPUImageView;
-import jp.co.cyberagent.android.gpuimage.OpenGlUtils;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class GalleryFragment extends Fragment {
     private final String TAG = "GalleryFragment";
-    private ImageView savedPhoto;
-    private String imageUri;
-    private Uri galleryImage;
     private final int PICK_IMAGE = 1;
+    private String imageUri;
+    private String filterName;
+    private static Bitmap currentBitmap;
+    private LruCache<String, Bitmap> mMemoryCache;
 
-    private GPUImageFilter mFilter;
+    private ImageFilterSurfaceView imageFilterSurfaceView;
+    /*private GPUImageFilter mFilter;
     private GPUImageFilterTools.FilterAdjuster mFilterAdjuster;
-    private GPUImageView mGPUImageView;
+    private GPUImageView mGPUImageView;*/
 
     public GalleryFragment() {
     }
 
-    public static GalleryFragment newInstance(String uri) {
+    public static GalleryFragment newInstance(String uri, String filterName) {
         Bundle args = new Bundle();
         args.putString("uri", uri);
+        args.putString("filter", filterName);
         GalleryFragment fragment = new GalleryFragment();
         fragment.setArguments(args);
         return fragment;
@@ -61,8 +62,71 @@ public class GalleryFragment extends Fragment {
         Bundle bundle = this.getArguments();
         if(bundle != null){
             imageUri = bundle.getString("uri");
-            //Log.d(TAG, imageUri);
+            filterName = bundle.getString("filter");
         }
+
+        // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+
+        loadBitmap(getRealPathFromURI(Uri.parse(imageUri), getActivity()));
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
+    }
+
+    public void loadBitmap(String uri) {
+        final String imageKey = uri;
+
+        final Bitmap bitmap = getBitmapFromMemCache(imageKey);
+        if (bitmap != null) {
+            currentBitmap = bitmap;
+            Log.d("Bitmap", "Already exists");
+        } else {
+            Log.d("Bitmap", "Doesn't exist");
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            currentBitmap = BitmapFactory.decodeFile(uri, options);
+            //options.inSampleSize = calculateInSampleSize(options, dWidth, dHeight);
+            options.inSampleSize = 4;
+            options.inJustDecodeBounds = false;
+            currentBitmap = BitmapFactory.decodeFile(uri, options);
+            addBitmapToMemoryCache(uri, currentBitmap);
+        }
+    }
+
+    public String getRealPathFromURI(Uri contentUri, Context context) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+
+        CursorLoader cursorLoader = new CursorLoader(
+                context,
+                contentUri, proj, null, null, null);
+        Cursor cursor = cursorLoader.loadInBackground();
+
+        int column_index =
+                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
     }
 
     @Override
@@ -70,34 +134,18 @@ public class GalleryFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_gallery, container, false);
-        /*savedPhoto = (ImageView) view.findViewById(R.id.galleryPhoto);
-        Bitmap photo = null;
-        try {
-            Uri uri = Uri.parse(imageUri);
-            photo = MediaStore.Images.Media.getBitmap(
-                    getActivity().getContentResolver(), uri);
-
-            Picasso.with(getActivity()).load(uri).into(savedPhoto);
-            //savedPhoto.setImageBitmap(photo);
-            Log.d("Photo Gallery", "fetched");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-
-        ImageFilterSurfaceView imageFilterSurfaceView = new ImageFilterSurfaceView(getActivity(),imageUri);
         imageFilterSurfaceView = (ImageFilterSurfaceView) view.findViewById(R.id.filterSurface);
+        imageFilterSurfaceView.setRenderer(imageUri, getActivity());
+        //imageFilterSurfaceView.getRenderer().setCurrentFilter(filterName, (float) 1);
+        Toast.makeText(getActivity(),filterName,Toast.LENGTH_SHORT).show();
 
-        FloatingActionButton gallery = (FloatingActionButton) view.findViewById(R.id.gallery);
-        gallery.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
+        /*imageFilterSurfaceView.setRenderer(imageUri, getActivity(), currentBitmap);
+        imageFilterSurfaceView.getRenderer().setCurrentFilter(filterName, (float) 1);
+        Toast.makeText(getActivity(),filterName,Toast.LENGTH_SHORT).show();*/
 
-                startActivityForResult(intent, PICK_IMAGE);
-            }
-        });
+        //imageFilterSurfaceView = new ImageFilterSurfaceView(getActivity(),imageUri);
+
+
         FloatingActionButton filter = (FloatingActionButton) view.findViewById(R.id.Filter);
         filter.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,43 +153,12 @@ public class GalleryFragment extends Fragment {
                 GPUImageFilterTools.showDialog(getActivity(), new GPUImageFilterTools.OnGpuImageFilterChosenListener() {
                     @Override
                     public void onGpuImageFilterChosenListener(GPUImageFilter filter) {
-                        /*switchFilterTo(filter);
-                        mGPUImageView.requestRender();*/
                     }
                 });
             }
         });
-        //mGPUImageView = (GPUImageView) view.findViewById(R.id.gpuimage);
+
         return view;
-
-        //return imageFilterSurfaceView;
     }
 
-    private void switchFilterTo(final GPUImageFilter filter) {
-        if (mFilter == null
-                || (filter != null && !mFilter.getClass().equals(filter.getClass()))) {
-            mFilter = filter;
-            mGPUImageView.setFilter(mFilter);
-            //mFilterAdjuster = new GPUImageFilterTools.FilterAdjuster(mFilter);
-        }
-    }
-
-    private void handleImage(final Uri selectedImage) {
-        mGPUImageView.setImage(selectedImage);
-    }
-
-    @Override
-    public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
-        switch (requestCode) {
-            case PICK_IMAGE:
-                if (resultCode == Activity.RESULT_OK) {
-                    handleImage(data.getData());
-                    imageUri = data.getData().toString();
-                }
-                break;
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
-                break;
-        }
-    }
 }

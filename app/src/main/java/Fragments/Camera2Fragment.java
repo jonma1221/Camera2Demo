@@ -448,5 +448,4 @@ public class Camera2Fragment extends Fragment {
             e.printStackTrace();
         }
     }
-
 }

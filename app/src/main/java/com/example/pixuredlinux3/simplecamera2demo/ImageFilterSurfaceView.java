@@ -25,10 +25,16 @@ import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.CursorLoader;
+import android.support.v4.util.LruCache;
+import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
+import android.view.WindowManager;
 
 import com.example.pixuredlinux3.simplecamera2demo.mod.*;
 import java.io.File;
@@ -41,6 +47,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ExecutionException;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -53,10 +60,88 @@ import javax.microedition.khronos.opengles.GL10;
 public class ImageFilterSurfaceView extends GLSurfaceView {
     private static final String TAG = "com.example.pixuredlinux3.simplecamera2demo.ImageFilterSurfaceView";
 
-    ImageRender mRenderer;
+    private Context context;
+    private ImageRender mRenderer;
+    private String URI;
     private String mMediaUri;
     private Bitmap origBitmap;
 
+    public void setRenderer(String uri, Context context, Bitmap bitmap){
+        setEGLContextClientVersion(2);
+        origBitmap = bitmap;
+
+        Log.d("Width", "Width: " + origBitmap.getWidth());
+        Log.d("Height", "Height: " + origBitmap.getHeight());
+        mRenderer = new ImageRender(origBitmap, (float) origBitmap.getWidth() / (float) origBitmap.getHeight());
+        setRenderer(mRenderer);
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
+    }
+
+    public void setRenderer(String uri, Context context){
+        mMediaUri = uri;
+        setEGLContextClientVersion(2);
+        URI = getRealPathFromURI(Uri.parse(mMediaUri), context);
+        ExifInterface exif;
+        int exifOrientation = 0;
+        try {
+            exif = new ExifInterface(URI);
+            exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        int rotation;
+        switch (exifOrientation) {
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                rotation = 90;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                rotation = 180;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                rotation = 270;
+                break;
+            default:
+                rotation = 0;
+                break;
+        }
+
+        BitmapTask task = new BitmapTask(URI, rotation);
+        try {
+            task.execute().get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        /*BitmapFactory.Options options = new BitmapFactory.Options();
+
+        origBitmap = BitmapFactory.decodeFile(URI);
+        origBitmap = getDownScaledBitmap(origBitmap, 500);*/
+
+        /*options.inJustDecodeBounds = true;
+        origBitmap = BitmapFactory.decodeFile(URI, options);
+        //options.inSampleSize = calculateInSampleSize(options, width, height);
+        options.inSampleSize = 8;
+        options.inJustDecodeBounds = false;
+        origBitmap = BitmapFactory.decodeFile(URI, options);*/
+
+        /*Log.d("Width", "Width: " + origBitmap.getWidth());
+        Log.d("Height", "Height: " + origBitmap.getHeight());
+        if (rotation != 0) {
+            android.graphics.Matrix matrix = new android.graphics.Matrix();
+            matrix.postRotate(rotation);
+            origBitmap = Bitmap.createBitmap(origBitmap, 0, 0, origBitmap.getWidth(), origBitmap.getHeight(), matrix, true);
+        }
+        mRenderer = new ImageRender(origBitmap, (float) origBitmap.getWidth() / (float) origBitmap.getHeight());
+        setRenderer(mRenderer);
+        setRenderMode(RENDERMODE_WHEN_DIRTY);*/
+    }
+
+    public ImageFilterSurfaceView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        this.context = context;
+    }
 
     public ImageFilterSurfaceView(Context context, String uri) {
         super(context);
@@ -90,7 +175,7 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
         //origBitmap = BitmapDecoder.getDecoder().decode(new File(Uri.parse(uri).getPath()));
 
         origBitmap = BitmapFactory.decodeFile(URI);
-        origBitmap = scaleDown(origBitmap, 2048, false);
+        origBitmap = scaleDown(origBitmap, 800, false);
         Log.d("Width", "Width: " + origBitmap.getWidth());
         Log.d("Height", "Height: " + origBitmap.getHeight());
         if (rotation != 0) {
@@ -102,6 +187,55 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
         mRenderer = new ImageRender(origBitmap, (float) origBitmap.getWidth() / (float) origBitmap.getHeight());
         setRenderer(mRenderer);
         setRenderMode(RENDERMODE_WHEN_DIRTY);
+    }
+    private static Bitmap getDownScaledBitmap(Bitmap bm, float longerEdgeMax) {
+        if (longerEdgeMax <= Integer.MAX_VALUE) {
+
+            int bmW = bm.getWidth();
+            int bmH = bm.getHeight();
+
+            if (bmW > bmH) {
+                if (bmW <= longerEdgeMax) {
+                    return bm;
+                } else {
+                    bmH = (int) (bmH * (longerEdgeMax / bmW));
+                    bmW = (int) longerEdgeMax;
+                }
+            } else {
+                if (bmH <= longerEdgeMax) {
+                    return bm;
+                } else {
+                    bmW = (int) (bmW * (longerEdgeMax / bmH));
+                    bmH = (int) longerEdgeMax;
+                }
+            }
+
+            return Bitmap.createScaledBitmap(bm, bmW, bmH, false);
+        } else {
+            return bm;
+        }
+    }
+    // this is the same method from Android's sample code
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
     }
 
     public static Bitmap scaleDown(Bitmap realImage, float maxImageSize,
@@ -150,6 +284,7 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
         return mRenderer;
     }
 
+
     public class ImageRender implements Renderer {
 
         private static final int FLOAT_SIZE_BYTES = 4;
@@ -195,6 +330,9 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
         private float viewWHRatio;
         private MyIO.BitmapRetrieverListener mListener;
 
+        int dWidth;
+        int dHeight;
+
         public ImageRender(Bitmap bm, float ratio) {
             mTriangleVertices = ByteBuffer.allocateDirect(
                     mTriangleVerticesData.length * FLOAT_SIZE_BYTES)
@@ -219,7 +357,7 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
                 return;
             }
             GLES20.glUseProgram(p.mProgram);
-            //GLToolbox.checkGlError("glUseProgram");
+            GLToolbox.checkGlError("glUseProgram");
 
             // Set the input texture
             mTriangleVertices.position(TRIANGLE_VERTICES_DATA_POS_OFFSET);
@@ -266,7 +404,13 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
         }
 
         public void onSurfaceChanged(GL10 glUnused, int width, int height) {
-            GLES20.glViewport(0, 0, width, height);
+            DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+            dWidth = metrics.widthPixels;
+            dHeight = metrics.heightPixels;
+            Log.d("Frame Width:", "" + dWidth);
+            Log.d("Frame Height:", "" + dHeight);
+           //GLES20.glViewport(0, 0, width, height);
+            GLES20.glViewport(0, 0, dWidth, dHeight);
             viewWHRatio = ((float) width / (float) height);
             int curflip = mShaderDetail.getRotation() / 90;
             TextureRenderer.updateUMatrix(mMVPMatrix,
@@ -334,6 +478,14 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
 
             mTextureIDs = new int[2];
             GLToolbox.loadTextures(mTextureIDs, mBitmap);
+        }
+
+        public int getFrameWidth(){
+            return dWidth;
+        }
+
+        public int getFrameHeight(){
+            return dHeight;
         }
 
         public PixuredFilter getCurrentShader() {
@@ -492,10 +644,47 @@ public class ImageFilterSurfaceView extends GLSurfaceView {
             mBitmap.copyPixelsFromBuffer(ibt);
             return mBitmap;
         }
-
-        public void updateTexture(){
-
-        }
     }
 
+    class BitmapTask extends AsyncTask<Void, Void, Bitmap>{
+        //Bitmap origBitmap;
+        String uri;
+        int rotation;
+        String filter;
+        int intensity;
+
+        public BitmapTask(String uri, int rotation){
+            this.uri = uri;
+            this.rotation = rotation;
+        }
+
+        @Override
+        protected Bitmap doInBackground(Void... params) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            origBitmap = BitmapFactory.decodeFile(uri, options);
+            //options.inSampleSize = calculateInSampleSize(options, dWidth, dHeight);
+            options.inSampleSize = 4;
+            options.inJustDecodeBounds = false;
+            origBitmap = BitmapFactory.decodeFile(uri, options);
+            return origBitmap;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            Log.d("Background", "Executed");
+            Log.d("Width", "Width: " + origBitmap.getWidth());
+            Log.d("Height", "Height: " + origBitmap.getHeight());
+            if (rotation != 0) {
+                android.graphics.Matrix matrix = new android.graphics.Matrix();
+                matrix.postRotate(rotation);
+                origBitmap = Bitmap.createBitmap(origBitmap, 0, 0, origBitmap.getWidth(), origBitmap.getHeight(), matrix, true);
+            }
+            mRenderer = new ImageRender(origBitmap, (float) origBitmap.getWidth() / (float) origBitmap.getHeight());
+            setRenderer(mRenderer);
+            setRenderMode(RENDERMODE_WHEN_DIRTY);
+        }
+    }
 }
+

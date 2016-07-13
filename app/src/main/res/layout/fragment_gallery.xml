@@ -5,30 +5,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="Fragments.GalleryFragment">
 
-        <!--<ImageView
-            android:id="@+id/galleryPhoto"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />-->
         <!--<jp.co.cyberagent.android.gpuimage.GPUImageView
             android:id="@+id/gpuimage"
             android:layout_gravity="center"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />-->
+
         <com.example.pixuredlinux3.simplecamera2demo.ImageFilterSurfaceView
             android:id="@+id/filterSurface"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/gallery"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_picture_in_picture_black_24dp"
-            app:backgroundTint="@android:color/darker_gray"
-            app:rippleColor="@android:color/white"
-            app:fabSize="mini"
-            android:layout_marginBottom="10dp"
-            android:layout_toLeftOf="@+id/Filter"
-            android:layout_alignParentBottom="true"/>
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/Filter"
@@ -37,8 +23,6 @@
             android:src="@drawable/ic_action_search"
             app:backgroundTint="@android:color/darker_gray"
             app:rippleColor="@android:color/white"
-            app:fabSize="mini"
-            android:layout_marginBottom="10dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentBottom="true"/>
